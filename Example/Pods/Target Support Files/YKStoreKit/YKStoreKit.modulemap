@@ -1,0 +1,6 @@
+framework module YKStoreKit {
+  umbrella header "YKStoreKit-umbrella.h"
+
+  export *
+  module * { export * }
+}

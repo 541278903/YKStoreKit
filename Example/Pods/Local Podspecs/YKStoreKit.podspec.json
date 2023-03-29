@@ -1,0 +1,22 @@
+{
+  "name": "YKStoreKit",
+  "version": "0.1.0",
+  "summary": "A short description of YKStoreKit.",
+  "description": "TODO: Add long description of the pod here.",
+  "homepage": "https://github.com/541278903/YKStoreKit",
+  "license": {
+    "type": "MIT",
+    "file": "LICENSE"
+  },
+  "authors": {
+    "541278903": "534272374@qq.com"
+  },
+  "source": {
+    "git": "https://github.com/541278903/YKStoreKit.git",
+    "tag": "0.1.0"
+  },
+  "platforms": {
+    "ios": "10.0"
+  },
+  "source_files": "YKStoreKit/Classes/**/*"
+}
