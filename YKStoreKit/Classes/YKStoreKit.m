@@ -14,4 +14,9 @@
 
 @implementation YKStoreKit
 
++ (void)payWithStoreId:(NSString *)storeId
+{
+    
+}
+
 @end

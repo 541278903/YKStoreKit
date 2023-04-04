@@ -11,6 +11,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface YKStoreKit : NSObject
 
++ (void)payWithStoreId:(NSString *)storeId;
+
 @end
 
 NS_ASSUME_NONNULL_END
+
