@@ -37,6 +37,7 @@
     YKStoreKitModel *_currentModel;
     id<YKStoreKitDelegate> _delegate;
     id<YKStoreKitPaySuccessProtocol> _protocol;
+    NSMutableArray *_cacheModels;
 }
 
 @end
@@ -268,6 +269,17 @@ static YKStoreKit *_instance;
     [[SKPaymentQueue defaultQueue] addPayment:payment];
 }
 
+- (NSMutableArray *)getCacheModels
+{
+    NSMutableArray *datas = [[NSUserDefaults standardUserDefaults] objectForKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"];
+    self->_cacheModels = datas;
+    
+    return datas;
+}
 
+- (void)addCacheModels
+{
+    
+}
 
 @end
