@@ -14,6 +14,11 @@
 
 @implementation YKStoreKit
 
++ (void)regist
+{
+    
+}
+
 + (void)payWithStoreId:(NSString *)storeId
 {
     
