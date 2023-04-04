@@ -9,15 +9,33 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol YKStoreKitPaySuccessProtocol <NSObject>
+
+- (void)paySuccessWithStoreId:(NSString *)storeId params:(NSDictionary *)params callBack:(void(^)(void))callBack;
+
+@end
+
+@protocol YKStoreKitDelegate <NSObject>
+
+- (void)error:(NSError *)error;
+
+- (void)log:(NSString *)message;
+
+@end
+
 @interface YKStoreKit : NSObject
 
 
-/// 执行
-+ (void)regist;
+/// 开始监听
++ (void)beginObserveWithProtocol:(id<YKStoreKitPaySuccessProtocol>)protocol;
+
+/// 设置回调
++ (void)registWith:(id<YKStoreKitDelegate>)delegate;
 
 /// 执行支付请求
 /// - Parameter storeId: 内购Id
-+ (void)payWithStoreId:(NSString *)storeId;
+/// - Parameter params: 内购参数
++ (void)payWithStoreId:(NSString *)storeId params:(NSDictionary *)params;
 
 @end
 
