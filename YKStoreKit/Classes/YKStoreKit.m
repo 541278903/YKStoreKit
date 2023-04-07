@@ -24,15 +24,45 @@
 
 - (NSDictionary *)getParams
 {
-    return self->_params;
+    if (self->_params) {
+        return self->_params;
+    }else {
+        return @{};
+    }
 }
 
+/// 模型转字典
+- (NSDictionary *)getThisModelToDic
+{
+    return @{@"storeId":[self getStoreId],@"params":[self getParams]};
+}
+
+/// 快速构造
+/// - Parameters:
+///   - storeId: 内购ID
+///   - params: 内购参数
 + (YKStoreKitModel *)createWith:(NSString *)storeId params:(NSDictionary *)params
 {
     YKStoreKitModel *modle = [[YKStoreKitModel alloc] init];
     modle->_storeId = storeId;
     modle->_params = params;
     return modle;
+}
+
+/// 字典转模型
+/// - Parameter dic: 字典
++ (YKStoreKitModel *)modelWithDic:(NSDictionary *)dic
+{
+    if ([dic.allKeys containsObject:@"storeId"]) {
+        
+        YKStoreKitModel *modle = [[YKStoreKitModel alloc] init];
+        modle->_storeId = dic[@"storeId"] ?: @"";
+        if ([dic.allKeys containsObject:@"params"]) {
+            modle->_params = dic[@"params"] ?: @{};
+        }
+        return modle;
+    }
+    return nil;
 }
 
 @end
@@ -101,7 +131,8 @@ static YKStoreKit *_instance;
             return;
         }
         
-        [YKStoreKit sharedInstance]->_currentModel = [YKStoreKitModel createWith:storeId params:params];
+        YKStoreKitModel *model = [YKStoreKitModel createWith:storeId params:params];
+        [YKStoreKit sharedInstance]->_currentModel = model;
         NSArray *product = [[NSArray alloc] initWithObjects:storeId,nil];
         NSSet *nsset = [NSSet setWithArray:product];
         SKProductsRequest *request = [[SKProductsRequest alloc] initWithProductIdentifiers:nsset];
@@ -189,23 +220,42 @@ static YKStoreKit *_instance;
 
 - (YKStoreKitModel *)getCacheModelWithTransaction:(SKPaymentTransaction *)transaction
 {
-    NSMutableArray *datas = [[NSUserDefaults standardUserDefaults] objectForKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"];
+    NSMutableArray *datas = [[[NSUserDefaults standardUserDefaults] objectForKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"]?:@[] mutableCopy];
     
     return nil;
 }
 
 /// 添加队列
 /// - Parameter transaction: 支付信息
-- (void)addCacheWithTransaction:(SKPaymentTransaction *)transaction
+- (void)addCacheWithModel:(YKStoreKitModel *)model
 {
+    NSDictionary *dic = [model getThisModelToDic];
     
+    NSMutableArray *caches = [[[NSUserDefaults standardUserDefaults] objectForKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"]?:@[] mutableCopy];
+    [caches addObject:dic];
+    
+    [[NSUserDefaults standardUserDefaults] setObject:[caches copy] forKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"];
 }
 
 /// 移除队列
 /// - Parameter transaction: 支付信息
 - (void)removeCacheWithTransaction:(SKPaymentTransaction *)transaction
 {
-    
+    if (self->_currentModel == nil) {
+        NSString *tStroeId = [NSString stringWithFormat:@"%@",@""];
+        NSMutableArray *caches = [[[NSUserDefaults standardUserDefaults] objectForKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"]?:@[] mutableCopy];
+        [caches.copy enumerateObjectsUsingBlock:^(NSDictionary  *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            if ([obj.allKeys containsObject:@"storeId"]) {
+                NSString *stordId = obj[@"storeId"]?:@"";
+                if ([stordId isEqualToString:tStroeId]) {
+                    [caches removeObjectAtIndex:idx];
+                    *stop = YES;
+                }
+            }
+        }];
+        
+        [[NSUserDefaults standardUserDefaults] setObject:[caches copy] forKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"];
+    }
 }
 
 
@@ -299,6 +349,9 @@ static YKStoreKit *_instance;
             requestProduct = pro;
         }
     }
+    
+    //MARK: 保存订单到缓存
+    [self addCacheWithModel:self->_currentModel];
     
     // 12.发送购买请求
     SKMutablePayment *payment = [SKMutablePayment paymentWithProduct:requestProduct];
