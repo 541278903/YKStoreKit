@@ -190,25 +190,33 @@ static YKStoreKit *_instance;
 - (YKStoreKitModel *)getCacheModelWithTransaction:(SKPaymentTransaction *)transaction
 {
     NSMutableArray *datas = [[NSUserDefaults standardUserDefaults] objectForKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"];
-//    self->_cacheModels = datas;
     
-//    return datas;
     return nil;
 }
 
+/// 添加队列
+/// - Parameter transaction: 支付信息
 - (void)addCacheWithTransaction:(SKPaymentTransaction *)transaction
+{
+    
+}
+
+/// 移除队列
+/// - Parameter transaction: 支付信息
+- (void)removeCacheWithTransaction:(SKPaymentTransaction *)transaction
 {
     
 }
 
 
 #pragma mark -=======
+/// 结束支付
+/// - Parameter transaction: 支付信息
 - (void)finishWithTransaction:(SKPaymentTransaction *)transaction
 {
     //MARK: 结束支付
-    NSString *storeId = [self->_currentModel getStoreId];
     self->_currentModel = nil;
-    //TODO: 移除队列
+    [self removeCacheWithTransaction:transaction];
     
     [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
 }
