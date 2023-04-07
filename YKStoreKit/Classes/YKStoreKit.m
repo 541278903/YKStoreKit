@@ -22,6 +22,11 @@
     return self->_storeId;
 }
 
+- (NSDictionary *)getParams
+{
+    return self->_params;
+}
+
 + (YKStoreKitModel *)createWith:(NSString *)storeId params:(NSDictionary *)params
 {
     YKStoreKitModel *modle = [[YKStoreKitModel alloc] init];
@@ -171,7 +176,31 @@ static YKStoreKit *_instance;
 - (void)purchasedWithTransaction:(SKPaymentTransaction *)transaction
 {
     //MARK: 验签回调
+    YKStoreKitModel *model = [self getCacheModelWithTransaction:transaction];
+    id<YKStoreKitPaySuccessProtocol> protocol = self->_protocol;
+    if (protocol && [protocol respondsToSelector:@selector(paySuccessWithStoreId:params:callBack:)]) {
+        __weak typeof(self) weakSelf = self;
+        [protocol paySuccessWithStoreId:[model getStoreId] params:[model getParams] callBack:^{
+            __strong typeof(weakSelf) strongSelf = weakSelf;
+            [strongSelf finishWithTransaction:transaction];
+        }];
+    }
 }
+
+- (YKStoreKitModel *)getCacheModelWithTransaction:(SKPaymentTransaction *)transaction
+{
+    NSMutableArray *datas = [[NSUserDefaults standardUserDefaults] objectForKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"];
+//    self->_cacheModels = datas;
+    
+//    return datas;
+    return nil;
+}
+
+- (void)addCacheWithTransaction:(SKPaymentTransaction *)transaction
+{
+    
+}
+
 
 #pragma mark -=======
 - (void)finishWithTransaction:(SKPaymentTransaction *)transaction
@@ -269,17 +298,6 @@ static YKStoreKit *_instance;
     [[SKPaymentQueue defaultQueue] addPayment:payment];
 }
 
-- (NSMutableArray *)getCacheModels
-{
-    NSMutableArray *datas = [[NSUserDefaults standardUserDefaults] objectForKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"];
-    self->_cacheModels = datas;
-    
-    return datas;
-}
 
-- (void)addCacheModels
-{
-    
-}
 
 @end
