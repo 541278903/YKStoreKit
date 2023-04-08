@@ -11,12 +11,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol YKStoreKitPaySuccessProtocol <NSObject>
 
-/// 验签内容
-/// - Parameters:
-///   - storeId: 支付Id
-///   - params: 支付参数
-///   - callBack: 验签成功回调
-- (void)paySuccessWithStoreId:(NSString *)storeId params:(NSDictionary *)params callBack:(void(^)(void))callBack;
+- (void)paySuccessWithStoreId:(NSString *)storeId
+        transactionIdentifier:(NSString *)transactionIdentifier
+        transactionReceiptStr:(NSString *)transactionReceiptStr
+                     callBack:(void(^)(void))callBack;
 
 @end
 
