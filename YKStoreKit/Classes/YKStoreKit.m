@@ -133,7 +133,7 @@ static YKStoreKit *_instance;
     [YKStoreKit sharedInstance]->_delegate = delegate;
 }
 
-+ (void)payWithStoreId:(NSString *)storeId params:(NSDictionary *)params
++ (void)payWithStoreId:(NSString *)storeId
 {
     if ([YKStoreKit sharedInstance]->_storeID != nil) {
         //MARK: 上一笔交易未完成
@@ -379,11 +379,12 @@ static YKStoreKit *_instance;
     
     //MARK: 保存订单到缓存
 //    [self addCacheWithModel:self->_currentModel];
+//    [self addCacheWithTransaction:req storeId:<#(NSString *)#> encodeDataString:<#(NSString *)#>]
     
     // 12.发送购买请求
-    SKMutablePayment *payment = [SKMutablePayment paymentWithProduct:requestProduct];
-    payment.quantity = 1;
-    [[SKPaymentQueue defaultQueue] addPayment:payment];
+//    SKMutablePayment *payment = [SKMutablePayment paymentWithProduct:requestProduct];
+//    payment.quantity = 1;
+//    [[SKPaymentQueue defaultQueue] addPayment:payment];
 }
 
 
