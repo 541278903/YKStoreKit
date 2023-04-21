@@ -243,24 +243,7 @@ static YKStoreKit *_instance;
     return nil;
 }
 
-/// 添加队列
-/// - Parameter transaction: 支付信息
-- (void)addCacheWithModel:(YKStoreKitModel *)model
-{
-    NSDictionary *dic = [model getThisModelToDic];
-    
-    NSMutableArray *caches = [[[NSUserDefaults standardUserDefaults] objectForKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"]?:@[] mutableCopy];
-    [caches addObject:dic];
-    
-    [[NSUserDefaults standardUserDefaults] setObject:[caches copy] forKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"];
-}
 
-- (void)addCacheWithTransaction:(SKPaymentTransaction *)transaction storeId:(NSString *)storeId encodeDataString:(NSString *)encodeDataString
-{
-    
-    
-    [self purchasedWithTransaction:transaction];
-}
 
 /// 移除队列
 /// - Parameter transaction: 支付信息
@@ -324,7 +307,7 @@ static YKStoreKit *_instance;
                     NSURL *receiptURL = [[NSBundle mainBundle] appStoreReceiptURL];
                     NSData *receiptData = [NSData dataWithContentsOfURL:receiptURL];
                     NSString *encodeStr = [receiptData base64EncodedStringWithOptions:NSDataBase64EncodingEndLineWithLineFeed];
-                    [strongSelf addCacheWithTransaction:obj storeId:strongSelf->_storeID encodeDataString:encodeStr];
+                    NSLog(@"%@",encodeStr);
                 }
                 
             }break;
@@ -369,7 +352,7 @@ static YKStoreKit *_instance;
     SKProduct *requestProduct = nil;
     for (SKProduct *pro in product) {
         
-        [self log:[NSString stringWithFormat:@"\r\ndes:%@\r\nlocalizedTitle:%@\r\nlocalizedDescription:%@\r\nprice:%@\r\nproductIdentifier:%@",[pro description],[pro localizedTitle],[pro localizedDescription],[pro price],[pro productIdentifier]]];
+        [self log:[NSString stringWithFormat:@"\r\n des:%@\r\n localizedTitle:%@\r\n localizedDescription:%@\r\n price:%@\r\n productIdentifier:%@",[pro description],[pro localizedTitle],[pro localizedDescription],[pro price],[pro productIdentifier]]];
         
         // 11.如果后台消费条目的ID与我这里需要请求的一样（用于确保订单的正确性）
         if([pro.productIdentifier isEqualToString:self->_storeID]){
@@ -378,13 +361,12 @@ static YKStoreKit *_instance;
     }
     
     //MARK: 保存订单到缓存
-//    [self addCacheWithModel:self->_currentModel];
-//    [self addCacheWithTransaction:req storeId:<#(NSString *)#> encodeDataString:<#(NSString *)#>]
+    
     
     // 12.发送购买请求
-//    SKMutablePayment *payment = [SKMutablePayment paymentWithProduct:requestProduct];
-//    payment.quantity = 1;
-//    [[SKPaymentQueue defaultQueue] addPayment:payment];
+    SKMutablePayment *payment = [SKMutablePayment paymentWithProduct:requestProduct];
+    payment.quantity = 1;
+    [[SKPaymentQueue defaultQueue] addPayment:payment];
 }
 
 

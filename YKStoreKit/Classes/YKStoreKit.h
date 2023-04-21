@@ -42,7 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// 执行支付请求
 /// - Parameter storeId: 内购Id
 /// - Parameter params: 内购参数
-+ (void)payWithStoreId:(NSString *)storeId params:(NSDictionary *)params;
++ (void)payWithStoreId:(NSString *)storeId;
 
 @end
 
