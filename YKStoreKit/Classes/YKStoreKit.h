@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol YKStoreKitPaySuccessProtocol <NSObject>
 
 - (void)paySuccessWithStoreId:(NSString *)storeId
+                      orderId:(NSString *)order
         transactionIdentifier:(NSString *)transactionIdentifier
         transactionReceiptStr:(NSString *)transactionReceiptStr
                      callBack:(void(^)(void))callBack;

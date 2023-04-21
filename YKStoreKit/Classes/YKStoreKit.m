@@ -13,6 +13,7 @@
     NSString * _storeId;
     NSString *_transactionIdentifier;
     NSString *_encodeStr;
+    NSString *_orderId;
 }
 @end
 
@@ -55,20 +56,30 @@
     self->_encodeStr = encodeStr;
 }
 
+- (NSString *)getOrderId
+{
+    if (self->_orderId != nil) {
+        return self->_orderId;
+    } else {
+        return @"";
+    }
+}
+
 /// 模型转字典
 - (NSDictionary *)getThisModelToDic
 {
-    return @{@"storeId":[self getStoreId],@"transactionIdentifier":[self getTransactionIdentifier],@"encodeStr":[self getEncodeStr]};
+    return @{@"storeId":[self getStoreId],@"transactionIdentifier":[self getTransactionIdentifier],@"encodeStr":[self getEncodeStr],@"orderId":[self getOrderId]};
 }
 
 /// 快速构造
 /// - Parameters:
 ///   - storeId: 内购ID
 ///   - params: 内购参数
-+ (YKStoreKitModel *)createWith:(NSString *)storeId transactionIdentifier:(NSString *)transactionIdentifier encodeStr:(NSString *)encodeStr
++ (YKStoreKitModel *)createWith:(NSString *)storeId orderId:(NSString *)orderId transactionIdentifier:(NSString *)transactionIdentifier encodeStr:(NSString *)encodeStr
 {
     YKStoreKitModel *modle = [[YKStoreKitModel alloc] init];
     modle->_storeId = storeId;
+    modle->_orderId = orderId;
     modle->_transactionIdentifier = transactionIdentifier;
     modle->_encodeStr = encodeStr;
     return modle;
@@ -82,6 +93,7 @@
         
         YKStoreKitModel *modle = [[YKStoreKitModel alloc] init];
         modle->_storeId = dic[@"storeId"] ?: @"";
+        modle->_orderId = dic[@"orderId"] ?: @"";
         if ([dic.allKeys containsObject:@"transactionIdentifier"]) {
             modle->_transactionIdentifier = dic[@"transactionIdentifier"] ?: @"";
         }
@@ -143,7 +155,7 @@ static YKStoreKit *_instance;
     [YKStoreKit sharedInstance]->_delegate = delegate;
 }
 
-+ (void)payWithStoreId:(NSString *)storeId
++ (void)payWithStoreId:(NSString *)storeId orderId:(NSString *)orderId
 {
     if ([YKStoreKit sharedInstance]->_storeModel != nil && [[YKStoreKit sharedInstance]->_storeModel getStoreId] != nil) {
         //MARK: 上一笔交易未完成
@@ -159,7 +171,7 @@ static YKStoreKit *_instance;
             [[YKStoreKit sharedInstance] error:@"未设置protocol"];
             return;
         }
-        
+        [YKStoreKit sharedInstance]->_storeModel = [YKStoreKitModel createWith:storeId orderId:orderId transactionIdentifier:@"" encodeStr:@""];
         NSArray *product = [[NSArray alloc] initWithObjects:storeId,nil];
         NSSet *nsset = [NSSet setWithArray:product];
         SKProductsRequest *request = [[SKProductsRequest alloc] initWithProductIdentifiers:nsset];
@@ -234,22 +246,15 @@ static YKStoreKit *_instance;
 - (void)purchasedWithTransaction:(SKPaymentTransaction *)transaction
 {
     //MARK: 验签回调
-    YKStoreKitModel *model = [self getCacheModelWithTransaction:transaction];
+    YKStoreKitModel *model = [self getModelInCacheWithId:transaction.payment.productIdentifier];
     id<YKStoreKitPaySuccessProtocol> protocol = self->_protocol;
-    if (protocol && [protocol respondsToSelector:@selector(paySuccessWithStoreId:transactionIdentifier:transactionReceiptStr:callBack:)]) {
+    if (protocol && [protocol respondsToSelector:@selector(paySuccessWithStoreId:orderId:transactionIdentifier:transactionReceiptStr:callBack:)]) {
         __weak typeof(self) weakSelf = self;
-        [protocol paySuccessWithStoreId:[model getStoreId] transactionIdentifier:[model getTransactionIdentifier] transactionReceiptStr:[model getEncodeStr] callBack:^{
+        [protocol paySuccessWithStoreId:[model getStoreId] orderId:[model getOrderId] transactionIdentifier:[model getTransactionIdentifier] transactionReceiptStr:[model getEncodeStr] callBack:^{
             __strong typeof(weakSelf) strongSelf = weakSelf;
             [strongSelf finishWithTransaction:transaction];
         }];
     }
-}
-
-- (YKStoreKitModel *)getCacheModelWithTransaction:(SKPaymentTransaction *)transaction
-{
-    NSMutableArray *datas = [[[NSUserDefaults standardUserDefaults] objectForKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"]?:@[] mutableCopy];
-    
-    return nil;
 }
 
 
@@ -258,7 +263,7 @@ static YKStoreKit *_instance;
 /// - Parameter transaction: 支付信息
 - (void)removeCacheWithTransaction:(SKPaymentTransaction *)transaction
 {
-    NSString *tStroeId = [NSString stringWithFormat:@"%@",@""];
+    NSString *tStroeId = [NSString stringWithFormat:@"%@",transaction.payment.productIdentifier];
     NSMutableArray *caches = [[[NSUserDefaults standardUserDefaults] objectForKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"]?:@[] mutableCopy];
     [caches.copy enumerateObjectsUsingBlock:^(NSDictionary  *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if ([obj.allKeys containsObject:@"storeId"]) {
@@ -271,6 +276,44 @@ static YKStoreKit *_instance;
     }];
     
     [[NSUserDefaults standardUserDefaults] setObject:[caches copy] forKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"];
+}
+
+- (void)addCaCheWithTransaction:(SKPaymentTransaction *)transaction
+{
+    NSString *tStroeId = [NSString stringWithFormat:@"%@",transaction.transactionIdentifier];
+    NSMutableArray *caches = [[[NSUserDefaults standardUserDefaults] objectForKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"]?:@[] mutableCopy];
+    
+    NSURL *receiptURL = [[NSBundle mainBundle] appStoreReceiptURL];
+    NSData *receiptData = [NSData dataWithContentsOfURL:receiptURL];
+    NSString *encodeStr = [receiptData base64EncodedStringWithOptions:NSDataBase64EncodingEndLineWithLineFeed];
+    NSLog(@"%@",encodeStr);
+    
+    [self->_storeModel setTransactionIdentifier:transaction.transactionIdentifier];
+    
+    [self->_storeModel setEncodeStr:encodeStr];
+    
+    NSDictionary *currendModelDic = [self->_storeModel getThisModelToDic];
+    
+    [caches addObject:currendModelDic];
+    
+    [[NSUserDefaults standardUserDefaults] setObject:[caches copy] forKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"];
+}
+
+- (YKStoreKitModel *)getModelInCacheWithId:(NSString *)storeId
+{
+    __block YKStoreKitModel *model = nil;
+    NSMutableArray *caches = [[[NSUserDefaults standardUserDefaults] objectForKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"]?:@[] mutableCopy];
+    [caches.copy enumerateObjectsUsingBlock:^(NSDictionary  *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if ([obj.allKeys containsObject:@"storeId"]) {
+            NSString *stordId = obj[@"storeId"]?:@"";
+            if ([stordId isEqualToString:storeId]) {
+                [caches removeObjectAtIndex:idx];
+                model = [YKStoreKitModel modelWithDic:obj];
+                *stop = YES;
+            }
+        }
+    }];
+    return model;
 }
 
 
@@ -307,22 +350,20 @@ static YKStoreKit *_instance;
             case SKPaymentTransactionStatePurchased:
             {
                 //MARK: 完成交易
+                //TODO: 完成
                 [strongSelf log:@"完成交易"];
                 
-                if (strongSelf->_storeModel == nil) {
-                    //MARK: 杀掉了应用，直接验签
-                    [strongSelf purchasedWithTransaction:obj];
-                }else {
-                    NSURL *receiptURL = [[NSBundle mainBundle] appStoreReceiptURL];
-                    NSData *receiptData = [NSData dataWithContentsOfURL:receiptURL];
-                    NSString *encodeStr = [receiptData base64EncodedStringWithOptions:NSDataBase64EncodingEndLineWithLineFeed];
-                    NSLog(@"%@",encodeStr);
+                if (self->_storeModel == nil) {
                     
-                    [strongSelf->_storeModel setEncodeStr:encodeStr];
-                    [strongSelf->_storeModel setTransactionIdentifier:obj.transactionIdentifier];
                     
-                    [strongSelf purchasedWithTransaction:obj];
+                    
+                } else {
+                    
+                    
+                    [strongSelf addCaCheWithTransaction:obj];
                 }
+                
+                [strongSelf purchasedWithTransaction:obj];
                 
             }break;
             case  SKPaymentTransactionStateFailed:
@@ -371,8 +412,6 @@ static YKStoreKit *_instance;
         // 11.如果后台消费条目的ID与我这里需要请求的一样（用于确保订单的正确性）
         if([pro.productIdentifier isEqualToString:[self->_storeModel getStoreId]]){
             requestProduct = pro;
-            
-            
         }
     }
     
