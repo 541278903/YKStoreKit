@@ -36,6 +36,11 @@
     }
 }
 
+- (void)setTransactionIdentifier:(NSString *)transactionIdentifier
+{
+    self->_transactionIdentifier = transactionIdentifier;
+}
+
 - (NSString *)getEncodeStr
 {
     if (self->_encodeStr != nil) {
@@ -43,6 +48,11 @@
     } else {
         return @"";
     }
+}
+
+- (void)setEncodeStr:(NSString *)encodeStr
+{
+    self->_encodeStr = encodeStr;
 }
 
 /// 模型转字典
@@ -88,7 +98,7 @@
 
 @interface YKStoreKit () <SKPaymentTransactionObserver,SKProductsRequestDelegate>
 {
-    NSString *_storeID;
+    YKStoreKitModel *_storeModel;
     id<YKStoreKitDelegate> _delegate;
     id<YKStoreKitPaySuccessProtocol> _protocol;
     NSMutableArray *_cacheModels;
@@ -114,7 +124,7 @@ static YKStoreKit *_instance;
 {
     if (_instance == nil) {
         _instance = [[YKStoreKit alloc] init];
-        _instance->_storeID = nil;
+        _instance->_storeModel = nil;
     }
 
     return _instance;
@@ -135,7 +145,7 @@ static YKStoreKit *_instance;
 
 + (void)payWithStoreId:(NSString *)storeId
 {
-    if ([YKStoreKit sharedInstance]->_storeID != nil) {
+    if ([YKStoreKit sharedInstance]->_storeModel != nil && [[YKStoreKit sharedInstance]->_storeModel getStoreId] != nil) {
         //MARK: 上一笔交易未完成
         [[YKStoreKit sharedInstance] log:@"上一笔交易未完成"];
         [[YKStoreKit sharedInstance] error:@"上一笔交易未完成"];
@@ -150,7 +160,6 @@ static YKStoreKit *_instance;
             return;
         }
         
-        [YKStoreKit sharedInstance]->_storeID = storeId;
         NSArray *product = [[NSArray alloc] initWithObjects:storeId,nil];
         NSSet *nsset = [NSSet setWithArray:product];
         SKProductsRequest *request = [[SKProductsRequest alloc] initWithProductIdentifiers:nsset];
@@ -218,7 +227,7 @@ static YKStoreKit *_instance;
 
 - (void)setCurrentIDToNull
 {
-    self->_storeID = nil;
+    self->_storeModel = nil;
 }
 
 #pragma mark -=======
@@ -300,7 +309,7 @@ static YKStoreKit *_instance;
                 //MARK: 完成交易
                 [strongSelf log:@"完成交易"];
                 
-                if (strongSelf->_storeID == nil) {
+                if (strongSelf->_storeModel == nil) {
                     //MARK: 杀掉了应用，直接验签
                     [strongSelf purchasedWithTransaction:obj];
                 }else {
@@ -308,6 +317,11 @@ static YKStoreKit *_instance;
                     NSData *receiptData = [NSData dataWithContentsOfURL:receiptURL];
                     NSString *encodeStr = [receiptData base64EncodedStringWithOptions:NSDataBase64EncodingEndLineWithLineFeed];
                     NSLog(@"%@",encodeStr);
+                    
+                    [strongSelf->_storeModel setEncodeStr:encodeStr];
+                    [strongSelf->_storeModel setTransactionIdentifier:obj.transactionIdentifier];
+                    
+                    [strongSelf purchasedWithTransaction:obj];
                 }
                 
             }break;
@@ -321,7 +335,7 @@ static YKStoreKit *_instance;
             case SKPaymentTransactionStateRestored:
             {
                 //MARK: 交易已被购买过
-                strongSelf->_storeID = nil;
+                strongSelf->_storeModel = nil;
                 [strongSelf log:@"交易已被购买过"];
                 [strongSelf error:@"交易已被购买过"];
             }break;
@@ -344,7 +358,7 @@ static YKStoreKit *_instance;
     NSArray *product = response.products;
     
     if([product count] == 0){
-        self->_storeID = nil;
+        self->_storeModel = nil;
         [self error:@"商品不存在"];
         return;
     }
@@ -355,8 +369,10 @@ static YKStoreKit *_instance;
         [self log:[NSString stringWithFormat:@"\r\n des:%@\r\n localizedTitle:%@\r\n localizedDescription:%@\r\n price:%@\r\n productIdentifier:%@",[pro description],[pro localizedTitle],[pro localizedDescription],[pro price],[pro productIdentifier]]];
         
         // 11.如果后台消费条目的ID与我这里需要请求的一样（用于确保订单的正确性）
-        if([pro.productIdentifier isEqualToString:self->_storeID]){
+        if([pro.productIdentifier isEqualToString:[self->_storeModel getStoreId]]){
             requestProduct = pro;
+            
+            
         }
     }
     
