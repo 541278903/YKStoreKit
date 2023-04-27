@@ -353,12 +353,7 @@ static YKStoreKit *_instance;
                 //TODO: 完成
                 [strongSelf log:@"完成交易"];
                 
-                if (self->_storeModel == nil) {
-                    
-                    
-                    
-                } else {
-                    
+                if (self->_storeModel != nil) {
                     
                     [strongSelf addCaCheWithTransaction:obj];
                 }
