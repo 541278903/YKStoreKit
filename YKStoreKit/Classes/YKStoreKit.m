@@ -246,7 +246,7 @@ static YKStoreKit *_instance;
 - (void)purchasedWithTransaction:(SKPaymentTransaction *)transaction
 {
     //MARK: 验签回调
-    YKStoreKitModel *model = [self getModelInCacheWithId:transaction.payment.productIdentifier];
+    YKStoreKitModel *model = [self getModelInCacheWithId:transaction.transactionIdentifier];
     id<YKStoreKitPaySuccessProtocol> protocol = self->_protocol;
     if (protocol && [protocol respondsToSelector:@selector(paySuccessWithStoreId:orderId:transactionIdentifier:transactionReceiptStr:callBack:)]) {
         __weak typeof(self) weakSelf = self;
@@ -263,11 +263,11 @@ static YKStoreKit *_instance;
 /// - Parameter transaction: 支付信息
 - (void)removeCacheWithTransaction:(SKPaymentTransaction *)transaction
 {
-    NSString *tStroeId = [NSString stringWithFormat:@"%@",transaction.payment.productIdentifier];
+    NSString *tStroeId = [NSString stringWithFormat:@"%@",transaction.transactionIdentifier];
     NSMutableArray *caches = [[[NSUserDefaults standardUserDefaults] objectForKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"]?:@[] mutableCopy];
     [caches.copy enumerateObjectsUsingBlock:^(NSDictionary  *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        if ([obj.allKeys containsObject:@"storeId"]) {
-            NSString *stordId = obj[@"storeId"]?:@"";
+        if ([obj.allKeys containsObject:@"transactionIdentifier"]) {
+            NSString *stordId = obj[@"transactionIdentifier"]?:@"";
             if ([stordId isEqualToString:tStroeId]) {
                 [caches removeObjectAtIndex:idx];
                 *stop = YES;
@@ -304,10 +304,9 @@ static YKStoreKit *_instance;
     __block YKStoreKitModel *model = nil;
     NSMutableArray *caches = [[[NSUserDefaults standardUserDefaults] objectForKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"]?:@[] mutableCopy];
     [caches.copy enumerateObjectsUsingBlock:^(NSDictionary  *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        if ([obj.allKeys containsObject:@"storeId"]) {
-            NSString *stordId = obj[@"storeId"]?:@"";
-            if ([stordId isEqualToString:storeId]) {
-                [caches removeObjectAtIndex:idx];
+        if ([obj.allKeys containsObject:@"transactionIdentifier"]) {
+            NSString *transactionIdentifier = obj[@"transactionIdentifier"]?:@"";
+            if ([storeId isEqualToString:transactionIdentifier]) {
                 model = [YKStoreKitModel modelWithDic:obj];
                 *stop = YES;
             }
@@ -324,7 +323,8 @@ static YKStoreKit *_instance;
 {
     //MARK: 结束支付
     [self removeCacheWithTransaction:transaction];
-    
+    self->_storeModel = nil;
+    [self log:[NSString stringWithFormat:@"结束订单:%@",transaction.transactionIdentifier]];
     [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
 }
 
