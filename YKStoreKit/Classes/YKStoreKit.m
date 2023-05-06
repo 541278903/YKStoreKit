@@ -237,6 +237,22 @@ static YKStoreKit *_instance;
     }
 }
 
+- (void)loading:(NSString *)message
+{
+    id<YKStoreKitDelegate> delegate = self->_delegate;
+    if (delegate && [delegate respondsToSelector:@selector(loading:)]) {
+        [delegate loading:message];
+    }
+}
+
+- (void)disLoading
+{
+    id<YKStoreKitDelegate> delegate = self->_delegate;
+    if (delegate && [delegate respondsToSelector:@selector(disLoading)]) {
+        [delegate disLoading];
+    }
+}
+
 - (void)setCurrentIDToNull
 {
     self->_storeModel = nil;
@@ -315,6 +331,17 @@ static YKStoreKit *_instance;
     return model;
 }
 
+- (NSArray<YKStoreKitModel *> *)getModelsInCaches
+{
+    NSMutableArray<YKStoreKitModel *> *models = [NSMutableArray array];
+    NSMutableArray *caches = [[[NSUserDefaults standardUserDefaults] objectForKey:@"YKStoreKit_Cache_Model_UserDefaults_Key"]?:@[] mutableCopy];
+    [caches.copy enumerateObjectsUsingBlock:^(NSDictionary  *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        YKStoreKitModel *model = [YKStoreKitModel modelWithDic:obj];
+        [models addObject:model];
+    }];
+    return models.copy;
+}
+
 
 #pragma mark -=======
 /// 结束支付
@@ -331,6 +358,8 @@ static YKStoreKit *_instance;
 #pragma mark -防丢订单
 - (void)revarifyChargeOrderFromLocalWithTransition:(NSArray<SKPaymentTransaction *> *)transitions receipts:(NSArray<NSString *> *)receipts completeBlock:(void(^)(NSError *error))completeBlock slience:(BOOL)slience
 {
+    NSArray<YKStoreKitModel *> *models = [self getModelsInCaches];
+    
     completeBlock(nil);
 }
 
@@ -340,6 +369,8 @@ static YKStoreKit *_instance;
     __weak typeof(self) weakSelf = self;
     [transactions enumerateObjectsUsingBlock:^(SKPaymentTransaction * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
+        [strongSelf loading:@"正在交易"];
+        
         //MARK: 支付相关回调
         switch (obj.transactionState) {
             case SKPaymentTransactionStatePurchasing:
@@ -351,8 +382,8 @@ static YKStoreKit *_instance;
             {
                 //MARK: 完成交易
                 //TODO: 完成
+                [strongSelf disLoading];
                 [strongSelf log:@"完成交易"];
-                
                 if (self->_storeModel != nil) {
                     
                     [strongSelf addCaCheWithTransaction:obj];
@@ -364,6 +395,7 @@ static YKStoreKit *_instance;
             case  SKPaymentTransactionStateFailed:
             {
                 //MARK: 交易失败
+                [strongSelf disLoading];
                 [strongSelf log:[NSString stringWithFormat:@"交易失败:%@",obj.error.localizedDescription]];
                 [strongSelf error:obj.error.localizedDescription];
                 [strongSelf finishWithTransaction:obj];
@@ -372,12 +404,14 @@ static YKStoreKit *_instance;
             {
                 //MARK: 交易已被购买过
                 strongSelf->_storeModel = nil;
+                [strongSelf disLoading];
                 [strongSelf log:@"交易已被购买过"];
                 [strongSelf error:@"交易已被购买过"];
             }break;
             case SKPaymentTransactionStateDeferred:
             {
                 //交易被延期
+                [strongSelf disLoading];
                 [strongSelf log:@"交易被延期"];
             }break;
                 
@@ -417,6 +451,7 @@ static YKStoreKit *_instance;
     SKMutablePayment *payment = [SKMutablePayment paymentWithProduct:requestProduct];
     payment.quantity = 1;
     [[SKPaymentQueue defaultQueue] addPayment:payment];
+    [self loading:@"请稍后"];
 }
 
 

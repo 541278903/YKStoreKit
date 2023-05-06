@@ -17,5 +17,5 @@ TODO: Add long description of the pod here.
 
   s.source_files = 'YKStoreKit/Classes/**/*'
   
-   s.frameworks = 'StoreKit','Foundation'
+   s.frameworks = 'StoreKit','Foundation','CoreFoundation'
 end

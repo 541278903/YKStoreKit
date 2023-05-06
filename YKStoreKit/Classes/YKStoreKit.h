@@ -29,6 +29,14 @@ NS_ASSUME_NONNULL_BEGIN
 /// - Parameter message: 日志信息
 - (void)log:(NSString *)message;
 
+/// 设置loading
+/// - Parameters:
+///   - message: loading消息
+- (void)loading:(NSString *)message;
+
+/// 取消loading
+- (void)disLoading;
+
 @end
 
 @interface YKStoreKit : NSObject
