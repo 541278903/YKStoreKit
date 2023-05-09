@@ -1,11 +1,13 @@
 
 Pod::Spec.new do |s|
   s.name             = 'YKStoreKit'
-  s.version          = '0.1.0'
-  s.summary          = 'A short description of YKStoreKit.'
+  s.version          = '0.0.1'
+  s.summary          = 'iOS 支付组件'
 
   s.description      = <<-DESC
-TODO: Add long description of the pod here.
+
+      iOS 支付组件
+      
                        DESC
 
   s.homepage         = 'https://github.com/541278903/YKStoreKit'
