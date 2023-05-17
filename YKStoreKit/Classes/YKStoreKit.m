@@ -111,10 +111,14 @@
 @interface YKStoreKit () <SKPaymentTransactionObserver,SKProductsRequestDelegate>
 {
     YKStoreKitModel *_storeModel;
-    id<YKStoreKitDelegate> _delegate;
-    id<YKStoreKitPaySuccessProtocol> _protocol;
     NSMutableArray *_cacheModels;
 }
+
+///
+@property (nonatomic, weak, readwrite) id<YKStoreKitDelegate> delegate;
+///
+@property (nonatomic, weak, readwrite) id<YKStoreKitPaySuccessProtocol> protocol;
+
 
 @end
 
@@ -146,13 +150,13 @@ static YKStoreKit *_instance;
 /// 开始监听
 + (void)beginObserveWithProtocol:(id<YKStoreKitPaySuccessProtocol>)protocol;
 {
-    [YKStoreKit sharedInstance]->_protocol = protocol;
+    [YKStoreKit sharedInstance].protocol = protocol;
     [[SKPaymentQueue defaultQueue] addTransactionObserver:[YKStoreKit sharedInstance]];
 }
 
 + (void)registWith:(id<YKStoreKitDelegate>)delegate
 {
-    [YKStoreKit sharedInstance]->_delegate = delegate;
+    [YKStoreKit sharedInstance].delegate = delegate;
 }
 
 + (void)payWithStoreId:(NSString *)storeId orderId:(NSString *)orderId
@@ -166,7 +170,7 @@ static YKStoreKit *_instance;
     
     void(^startRequest)(void) = ^(void){
         
-        if ([YKStoreKit sharedInstance]->_protocol == nil) {
+        if ([YKStoreKit sharedInstance].protocol == nil) {
             [[YKStoreKit sharedInstance] log:@"未设置protocol"];
             [[YKStoreKit sharedInstance] error:@"未设置protocol"];
             return;
@@ -219,7 +223,7 @@ static YKStoreKit *_instance;
 - (void)log:(NSString *)message
 {
     //MARK: 日志回调
-    id<YKStoreKitDelegate> delegate = self->_delegate;
+    id<YKStoreKitDelegate> delegate = self.delegate;
     if (delegate && [delegate respondsToSelector:@selector(log:)]) {
         [delegate log:message];
     }
@@ -228,7 +232,7 @@ static YKStoreKit *_instance;
 - (void)error:(NSString *)errorMessage
 {
     //MARK: 错误回调
-    id<YKStoreKitDelegate> delegate = self->_delegate;
+    id<YKStoreKitDelegate> delegate = self.delegate;
     if (delegate && [delegate respondsToSelector:@selector(error:)]) {
         NSError *err = [NSError errorWithDomain:@"com.yk.storeKit" code:-1 userInfo:@{
             NSLocalizedDescriptionKey:errorMessage,
@@ -239,7 +243,7 @@ static YKStoreKit *_instance;
 
 - (void)loading:(NSString *)message
 {
-    id<YKStoreKitDelegate> delegate = self->_delegate;
+    id<YKStoreKitDelegate> delegate = self.delegate;
     if (delegate && [delegate respondsToSelector:@selector(loading:)]) {
         [delegate loading:message];
     }
@@ -247,7 +251,7 @@ static YKStoreKit *_instance;
 
 - (void)disLoading
 {
-    id<YKStoreKitDelegate> delegate = self->_delegate;
+    id<YKStoreKitDelegate> delegate = self.delegate;
     if (delegate && [delegate respondsToSelector:@selector(disLoading)]) {
         [delegate disLoading];
     }
@@ -263,7 +267,7 @@ static YKStoreKit *_instance;
 {
     //MARK: 验签回调
     YKStoreKitModel *model = [self getModelInCacheWithId:transaction.transactionIdentifier];
-    id<YKStoreKitPaySuccessProtocol> protocol = self->_protocol;
+    id<YKStoreKitPaySuccessProtocol> protocol = self.protocol;
     if (protocol && [protocol respondsToSelector:@selector(paySuccessWithStoreId:orderId:transactionIdentifier:transactionReceiptStr:callBack:)]) {
         __weak typeof(self) weakSelf = self;
         [protocol paySuccessWithStoreId:[model getStoreId] orderId:[model getOrderId] transactionIdentifier:[model getTransactionIdentifier] transactionReceiptStr:[model getEncodeStr] callBack:^{
