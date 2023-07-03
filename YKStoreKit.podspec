@@ -1,18 +1,13 @@
-#
-# Be sure to run `pod lib lint YKStoreKit.podspec' to ensure this is a
-# valid spec before submitting.
-#
-# Any lines starting with a # are optional, but their use is encouraged
-# To learn more about a Podspec see https://guides.cocoapods.org/syntax/podspec.html
-#
 
 Pod::Spec.new do |s|
   s.name             = 'YKStoreKit'
-  s.version          = '0.1.0'
-  s.summary          = 'A short description of YKStoreKit.'
+  s.version          = '0.0.1'
+  s.summary          = 'iOS 支付组件'
 
   s.description      = <<-DESC
-TODO: Add long description of the pod here.
+
+      iOS 支付组件
+      
                        DESC
 
   s.homepage         = 'https://github.com/541278903/YKStoreKit'
@@ -24,5 +19,5 @@ TODO: Add long description of the pod here.
 
   s.source_files = 'YKStoreKit/Classes/**/*'
   
-   s.frameworks = 'StoreKit','Foundation'
+   s.frameworks = 'StoreKit','Foundation','CoreFoundation'
 end
