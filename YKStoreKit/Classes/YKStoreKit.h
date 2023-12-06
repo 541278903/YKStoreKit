@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
                       orderId:(NSString *)order
         transactionIdentifier:(NSString *)transactionIdentifier
         transactionReceiptStr:(NSString *)transactionReceiptStr
-                     callBack:(void(^)(void))callBack;
+                     callBack:(void(^)(BOOL isSuccess))callBack;
 
 @end
 
@@ -23,19 +23,19 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// 错误回调
 /// - Parameter error: 错误信息
-- (void)error:(NSError *)error;
+- (void)storeKitWithError:(NSError *)error;
 
 /// 日志回调
 /// - Parameter message: 日志信息
-- (void)log:(NSString *)message;
+- (void)storeKitLogWithMessage:(NSString *)message;
 
 /// 设置loading
 /// - Parameters:
 ///   - message: loading消息
-- (void)loading:(NSString *)message;
+- (void)storeKitLoadingWithMessage:(NSString *)message;
 
 /// 取消loading
-- (void)disLoading;
+- (void)storeKitDisLoading;
 
 @end
 
