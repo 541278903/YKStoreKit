@@ -183,6 +183,8 @@ static YKStoreKit *_instance;
         SKProductsRequest *request = [[SKProductsRequest alloc] initWithProductIdentifiers:nsset];
         request.delegate = [YKStoreKit sharedInstance];
         [request start];
+        
+        [[YKStoreKit sharedInstance] loading:@"请稍后"];
     };
     
     NSArray *unfinishTransactions = [SKPaymentQueue defaultQueue].transactions;
@@ -446,6 +448,7 @@ static YKStoreKit *_instance;
                 [strongSelf disLoading];
                 [strongSelf log:@"交易已被购买过"];
                 [strongSelf error:@"交易已被购买过"];
+                [strongSelf finishWithTransaction:obj];
             }break;
             case SKPaymentTransactionStateDeferred:
             {
@@ -468,6 +471,7 @@ static YKStoreKit *_instance;
     
     if([product count] == 0){
         self->_storeModel = nil;
+        [self disLoading];
         [self error:@"商品不存在"];
         return;
     }
@@ -490,7 +494,6 @@ static YKStoreKit *_instance;
     SKMutablePayment *payment = [SKMutablePayment paymentWithProduct:requestProduct];
     payment.quantity = 1;
     [[SKPaymentQueue defaultQueue] addPayment:payment];
-    [self loading:@"请稍后"];
 }
 
 

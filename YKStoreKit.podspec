@@ -1,7 +1,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'YKStoreKit'
-  s.version          = '0.0.1'
+  s.version          = '0.1.0'
   s.summary          = 'iOS 支付组件'
 
   s.description      = <<-DESC
@@ -19,5 +19,5 @@ Pod::Spec.new do |s|
 
   s.source_files = 'YKStoreKit/Classes/**/*'
   
-   s.frameworks = 'StoreKit','Foundation','CoreFoundation'
+  s.frameworks = 'StoreKit','Foundation','CoreFoundation'
 end
